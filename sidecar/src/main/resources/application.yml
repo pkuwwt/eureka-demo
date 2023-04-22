@@ -1,0 +1,9 @@
+
+spring:
+  application:
+    name: JavaApp
+
+#sidecar:
+#  port: 8080
+#  health-uri: http://localhost:8080/health.json
+

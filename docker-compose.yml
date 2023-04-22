@@ -1,0 +1,50 @@
+version: "3.0"
+
+services:
+  eureka:
+    image: hongfs/eureka:v2.3
+    restart: always
+    ports:
+      - 8761:8761
+    volumes:
+      - ./metersphere.properties:/opt/metersphere/conf/metersphere.properties
+  java-app:
+    image: eureka-test/java-app
+    build:
+      context: java-app
+    restart: always
+    command: --eureka.client.serviceUrl.defaultZone=http://eureka:8761/eureka
+    depends_on:
+      - eureka
+  python-app:
+    image: eureka-test/python-app
+    build:
+      context: python-app
+    restart: always
+  node-app:
+    image: eureka-test/node-app
+    build:
+      context: node-app
+    restart: always
+  golang-app:
+    image: eureka-test/golang-app
+    build:
+      context: golang-app
+    restart: always
+  sidecar:
+    image: eureka-test/sidecar
+    build:
+      context: sidecar
+    #command: --eureka.client.healthcheck.enabled=true --sidecar.port=8000 --sidecar.health-uri=http://golang-app:8000/health --spring.application.name=golang-app --eureka.client.serviceUrl.defaultZone=http://eureka:8761/eureka --eureka.instance.prefer-ip-address=false
+    command: --sidecar
+    environment:
+      - APP_CONFIG_BASE=eureka.client.healthcheck.enabled=true;eureka.client.serviceUrl.defaultZone=http://eureka:8761/eureka;eureka.instance.prefer-ip-address=false #;eureka.instance.instance-id=\${spring.cloud.client.ipAddress}:\${server.port}"
+      - APP_CONFIG_PYTHON_APP=spring.application.name=python-app;sidecar.port=5000;sidecar.health-uri=http://python-app:5000/health
+      - APP_CONFIG_NODE_APP=spring.application.name=node-app;sidecar.port=3000;sidecar.health-uri=http://node-app:3000/health
+      - APP_CONFIG_GOLANG_APP=spring.application.name=golang-app;sidecar.port=8000;sidecar.health-uri=http://golang-app:8000/health
+    depends_on:
+      - eureka
+      - python-app
+      - node-app
+      - golang-app
+
